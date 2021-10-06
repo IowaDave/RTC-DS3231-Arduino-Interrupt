@@ -96,7 +96,7 @@ The first five parameters are of type "byte". The C++ Standard defines the byte 
 
 We can think of byte-type variables as if they were unsigned integers in this particular situation. They can hold an integer value between 0 and 255. *CAUTION: the code writer has to avoid nonsensical values. For example, a value of 102 makes no sense for any of these parameters. It is your job as the code writer to supply sensible values.*
 
-Suppose you want to set an alarm for the 27th day of the month, at 17 seconds past 10:42 in the morning? The listing below shows how you might supply those values into the function. I like to separate the parameters, each onto its own line, to make them more readable by humans and to allow space for comments. The example here is incomplete; it demonstrates only the byte-type values for date and time. It requires more parameters, described below, and will not run in the form shown here.
+Suppose you want to set an alarm for the 27th day of the month, at 17 seconds past 10:42 in the morning? The listing below shows how you might supply those values into the function. Each parameter is listed on its own line, to make them more readable by humans and to allow space for comments. The example here is incomplete; it demonstrates only the byte-type values for date and time. The function requires more parameters, as described below, and will not run in the form shown here.
 
 ``` 
     setA1Time(
@@ -108,5 +108,36 @@ Suppose you want to set an alarm for the 27th day of the month, at 17 seconds pa
     );
 ```
 
+The next parameter is a byte that truly is only a collection of bits. The bits have names as defined in the DS3231 datasheet (on page 11). 
+
+|Bit 7|Bit 6|Bit 5|Bit 4|Bit 3|Bit 2|Bit 1|Bit0|
+|--|--|--|DyDt|A1M4|A1M3|A1M2|A1M1|
+
+Together, the bits form a "mask", or pattern, which tells the DS3231 when and how often to signal an alarm. A table on page 12 of the datasheet gives the meaning for different collections of the bits. Based on that table, the example sketch in this tutorial uses the following collection of bits:
+
+
+|--|--|--|DyDt|A1M4|A1M3|A1M2|A1M1|
+|0|0|0|0|1|1|1|0|
+
+This arrangement of bits can be expressed explicitly in the code: ```0x00001110```. It tells the DS3231 to signal the alarm whenever "the seconds match", that is, when the "seconds" value of the alarm setting matches the "seconds" value of the current time. 
+
+The final three parameters of the ```setA1Time()``` function are boolean, or true/false values. They tell the DS3231 more information about how to evaluate the alarm setting. The following code segment shows the completed call to setA1Time(), continuing the example shown above:
+
+``` 
+    setA1Time(
+      27, // A1Day = the 27th day
+      10, // A1Hour = the hour of 10 in the morning
+      42, // A1Minute = the 42nd minute of the hour
+      17, // A1Second = the 17th second of the minute
+      0x00001110, // AlarmBits = signal when the seconds match
+      false, // A1Dy false = A1Day means the date in the month; true = A1Day means the day of the week
+      false, // A1h12 false = A1Hour of 0..23; true = A1Hour of 1..12 AM or PM
+      false  // A1PM false = match A1Hour a.m.; true = match A1Hour p.m.
+    );
+```
+
+In the example sketch, where we set the alarm to interrupt every 10 seconds, only the A1Second and the AlarmBits parameters matter. However, we need to supply them all when we call the function to setA1Time(). Correct values are no more difficult to provide than junk values are; we might as well exercise care with them.
+
+The setA2Time() function works similarly, but without a parameter for seconds. Take some time to review lines 119 through 145 of the DS3231.h file in the library and pages 11-12 in the datasheet. Sit patiently with these references until you have found in them the information you need to understand and to use the alarm-setting functions.
 
 
