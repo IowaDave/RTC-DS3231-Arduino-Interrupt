@@ -53,3 +53,25 @@ void runTheSpecialCode() {
   // put special code in its own, special function
 } 
 ```
+
+## Step 2: Connections
+You will run wires between five pairs of pins. Each pair performs one electrical purpose and matches a pin on the Arduino with a corresponding pin on the DS3231. Take it slowly, connect each pair, then check both ends to make sure each wire goes where it should.  The table lists the pairs in order as they attach, going left to right, onto the DS3231 from an Arduino Uno.
+
+|Purpose|DS3231 Pin|Arduino Pin|
+|--------|---------|----------|
+|Alarm|SQW|3\*|
+|SCL|SCL|SCL\*\*|
+|SDA|SDA|SDA\*\*|
+|5 volt power|VCC|5V|
+|Ground|GND|GND|
+
+* \*Pins 2 and 3 are the interrupt pins on the Uno. 
+    * Use pins 0, 1, or 7 for a Leonardo; 7 is probably best.
+    * Technically, pins 2 and 3 can also handle interrupts on a Leonardo. However, the DS3231 needs to use them for its communications.
+* \*\*SCL and SDA are labeled as such on newer Arduinos. 
+    * On older Unos lacking these markings, SCL is analog pin A5 and SDA is analog pin A4.
+    * On Leonardos, SCL is digital pin 3 and SDA is digital pin 2.
+
+Like I said, take your time making these connections. Slow and sure is often the fastest way to complete anything correctly.
+
+## Step 3: Set an alarm on the DS3231
