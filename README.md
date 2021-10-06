@@ -12,7 +12,7 @@ Finally, you want to learn how to use the DS3231.h library by Andrew Wickert tha
 ## Solution
 Go step by step. This tutorial demonstrates the following steps:
 1. Put the special code segments into a block that runs only when it is allowed to, rather than in the main loop of your sketch. 
-2. Connect the alarm pin (named, SQW) of the DS3231 module to a pin on the Arduino that can be used for interrupts.
+2. Connect the alarm pin (named SQW) of the DS3231 module to a pin on the Arduino that can be used for interrupts.
 3. Set an alarm on the DS3231 clock.
 4. The Arduino's main loop can ignore the clock while it performs other tasks.  
 5. When the alarm happens, the DS3231 will pull the Arduino pin "low", that is, to near-zero voltage. 
@@ -75,3 +75,38 @@ You will run wires between five pairs of pins. Each pair performs one electrical
 Like I said, take your time making these connections. Slow and sure is often the fastest way to complete anything correctly.
 
 ## Step 3: Set an alarm on the DS3231
+This step assumes that you have previously set the actual time on the DS3231. The example sketch contains code you can use to set the time on clock, in case you need it. Simply remove the comment delimiters, /\* and \*/, that surround it.
+
+A DS3231 makes two, different alarms available: Alarm #1 (A1) and Alarm #2 (A2). Both alarms can be specified to a day and time, down to a minute. The difference is that A1 can be set down to a second. Each alarm has its own pair of functions in the DS3231 library for setting the time of the alarm and for reading that time. They are:
+
+> setA1Time(),
+> getA1Time(),
+> setA2Time(), and
+> getA2Time()
+
+The setA1Time() function takes eight parameters:
+
+```void setA1Time(byte A1Day, byte A1Hour, byte A1Minute, byte A1Second, byte AlarmBits, bool A1Dy, bool A1h12, bool A1PM); ```
+
+The first five parameters are of type "byte". The C++ Standard defines the byte type this way [https://en.cppreference.com/w/cpp/types/byte](https://en.cppreference.com/w/cpp/types/byte):
+
+> std::byte is a distinct type that implements the concept of byte as specified in the C++ language definition.
+
+> Like char and unsigned char, it can be used to access raw memory occupied by other objects (object representation), but unlike those types, it is not a character type and is not an arithmetic type. A byte is only a collection of bits, and the only operators defined for it are the bitwise ones.
+
+We can think of byte-type variables as if they were unsigned integers in this particular situation. They can hold an integer value between 0 and 255. *CAUTION: the code writer has to avoid nonsensical values. For example, a value of 102 makes no sense for any of these parameters. It is your job as the code writer to supply sensible values.*
+
+Suppose you want to set an alarm for the 27th day of the month, at 17 seconds past 10:42 in the morning? The listing below shows how you might supply those values into the function. I like to separate the parameters, each onto its own line, to make them more readable by humans and to allow space for comments. The example here is incomplete; it demonstrates only the byte-type values for date and time. It requires more parameters, described below, and will not run in the form shown here.
+
+``` 
+    setA1Time(
+      27, // the 27th day
+      10, // the hour of 10
+      42, // the 42nd minute of the hour
+      17, // the 17th second of the minute
+      // ... the remaining parameters are explained below
+    );
+```
+
+
+
