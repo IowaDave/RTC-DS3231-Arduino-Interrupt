@@ -77,14 +77,53 @@ You will run wires between five pairs of pins. Each pair performs one electrical
 Like I said, take your time making these connections. Slow and sure is often the fastest way to complete anything correctly.
 
 ## Step 3: Set an alarm on the DS3231
+
+We will talk to the DS3231 module by means of a DS3231 "object", a kind of software toolbox with a name on it. The DS3231 library defines a lot of functions -- think of them as tools -- inside the box. When we want to use a function, we write the name of the toolbox, followed by a dot, then the name of the tool. The example sketch creates a "clock" variable for this purpose. Then the sketch can access the tools in the "clock" box. All of the tools are declared in the DS3231.h file, mentioned above.
+
+```
+#include <DS3231.h>
+DS3231 clock;
+
+Serial.println(clock.month()); // the current month, 1..12
+```
+
+We will use tools in our "clock" object to set the alarm. But first we need to calculate the alarm time.
+
+### Calculating the alarm time
 This step assumes that you have previously set the actual time on the DS3231. The example sketch contains code you can use to set the time on clock, in case you need it. Simply remove the comment delimiters, /\* and \*/, that surround it.
 
-A DS3231 makes two, different alarms available: Alarm #1 (A1) and Alarm #2 (A2). Both alarms can be specified to a day and time, down to a minute. The difference is that A1 can be set down to a second. Each alarm has its own pair of functions in the DS3231 library for setting the time of the alarm and for reading that time. They are:
+The example sketch in this tutoral computes an alarm time in the future by adding an interval, as a number of seconds, to the current time. The example adds ten seconds. A minute would add 60 seconds.  An hour would add 3,600 seconds. A day, 86,400 seconds. And so forth. 
 
-> setA1Time(),
-> getA1Time(),
-> setA2Time(), and
-> getA2Time()
+The DS3231 library has a hidden "trick" that makes it easy to add time as a number of seconds. You will not find this trick listed among the available functions on the DS3231 library's README page. It is not entirely obvious by looking at the DS3231.h file, either. Some of the details wait to be found in the DS3231.cpp code file. Here are the steps to perform the computation.
+
+1. Declare a DateTime object, another kind of software toolbox, using the default method.
+2. Set this variable equal to the ```now()``` function, which needs to be accesed in a special way.
+3. Extract the value of the DateTime variable as an unsigned, long integer. The value represents a number of seconds.
+4. Add the amount of seconds in the interval to this value. The sum is the new alarm time, in seconds.
+5. Declare a new, different DateTime object, using an alternative method that takes that number of seconds as an initial value.
+
+Steps 4 and 5 can be combined.
+
+```
+const Uint32_t interval = 10;  // number of seconds to add 
+DateTime currentTime; // default declaration
+currentTime = RTClib::now(); // RTClib is defined in DS3231.h
+uint32_t currentSeconds = currentTime.unixtime(); // express the date in seconds
+DateTime alarmTime(currentSeconds + interval); // add 10 seconds and create a new date
+```
+
+Even though the alarmTime object is created based on a number of seconds, it provides tools in its toolbox to express its year, month, day, hour, minute, and second. We set the alarm time on the DS3231, as described next, using the alarmTime as the source of the values we will need.
+
+Suppose, for example, that the currentTime reported by the DS3231 module was 7 seconds past 10:42 in the morning on Wednesday, October 27, 2021. The alarmTime calculated above would be 10:42:17 that same day, ten seconds later.
+
+### Set the alarm time
+
+A DS3231 makes two, different alarms available: Alarm #1 (A1) and Alarm #2 (A2). Both alarms can be specified to a day and time, down to a minute. The difference is that A1 can be further specified down to a second. Each alarm has its own pair of functions in the DS3231 library for setting the time of the alarm and for reading that time. The functions are all accessed through a DS3231 object, for example, the one we named, "clock":
+
+> clock.setA1Time(),
+> clock.getA1Time(),
+> clock.setA2Time(), and
+> clock.getA2Time()
 
 The setA1Time() function takes eight parameters:
 
@@ -98,14 +137,16 @@ The first five parameters are of type "byte". The C++ Standard defines the byte 
 
 We can think of byte-type variables as if they were unsigned integers in this particular situation. They can hold an integer value between 0 and 255. *CAUTION: the code writer has to avoid nonsensical values. For example, a value of 102 makes no sense for any of these parameters. It is your job as the code writer to supply sensible values.*
 
-Suppose you want to set an alarm for the 27th day of the month, at 17 seconds past 10:42 in the morning? The listing below shows how you might supply those values into the function. Each parameter is listed on its own line, to make them more readable by humans and to allow space for comments. The example here is incomplete; it demonstrates only the byte-type values for date and time. The function requires more parameters, as described below, and will not run in the form shown here.
+Let's continue with the alarmTime created in the previous step: the 27th day of the month, at 17 seconds past 10:42 in the morning. The listing below shows how you might supply those values into the function. I list parameter on its own line, to make them more readable by humans and to allow space for comments. The example here is incomplete; it demonstrates only the byte-type values for date and time. The function requires more parameters, as described below, and will not run in the form shown here.
+
+By the way, this is where we begin to use that DS3231 object named "clock".
 
 ``` 
-    setA1Time(
-      27, // the 27th day
-      10, // the hour of 10
-      42, // the 42nd minute of the hour
-      17, // the 17th second of the minute
+    clock.setA1Time(
+      alarmTime.day(), // the day of the month: 27
+      alarmTime.hour(), // the hour of the day: 10
+      alarmTime.minute(), // the minute of the hour: 42
+      alarmTime.second(), // the second of the minute: 17
       // ... the remaining parameters are explained below
     );
 ```
@@ -123,14 +164,14 @@ Together, the bits form a "mask", or pattern, which tells the DS3231 when and ho
 
 This arrangement of bits can be expressed explicitly in the code: ```0x00001110```. It tells the DS3231 to signal the alarm whenever "the seconds match", that is, when the "seconds" value of the alarm setting matches the "seconds" value of the current time. 
 
-The final three parameters of the ```setA1Time()``` function are boolean, or true/false values. They tell the DS3231 more information about how to evaluate the alarm setting. The following code segment shows the completed call to setA1Time(), continuing the example shown above:
+The final three parameters of the ```setA1Time()``` function are boolean, or true/false values. They tell the DS3231 more information about how to evaluate the alarm setting. The following code segment shows the completed call to setA1Time(), continuing the example begun above:
 
 ``` 
-    setA1Time(
-      27, // A1Day = the 27th day
-      10, // A1Hour = the hour of 10 in the morning
-      42, // A1Minute = the 42nd minute of the hour
-      17, // A1Second = the 17th second of the minute
+    clock.setA1Time(
+      alarmTime.day(), // the day of the month: 27
+      alarmTime.hour(), // the hour of the day: 10
+      alarmTime.minute(), // the minute of the hour: 42
+      alarmTime.second(), // the second of the minute: 17
       0x00001110, // AlarmBits = signal when the seconds match
       false, // A1Dy false = A1Day means the date in the month; true = A1Day means the day of the week
       false, // A1h12 false = A1Hour of 0..23; true = A1Hour of 1..12 AM or PM
@@ -140,7 +181,25 @@ The final three parameters of the ```setA1Time()``` function are boolean, or tru
 
 In the example sketch, where we set the alarm to interrupt every 10 seconds, only the A1Second and the AlarmBits parameters matter. However, we need to supply them all when we call the function to setA1Time(). Correct values are no more difficult to provide than junk values are; we might as well exercise care with them.
 
-The setA2Time() function works similarly, but without a parameter for seconds. Take some time to review lines 119 through 145 of the DS3231.h file in the library and pages 11-12 in the datasheet. Sit patiently with these references until you have found in them the information you need to understand and to use the alarm-setting functions.
+The setA2Time() function works similarly, but without a parameter for seconds. Take some time to review lines 119 through 145 of the DS3231.h file in the library and pages 11-12 in the datasheet. Sit patiently with these references until you have found in them the information you need to set an alarm time.
+
+### Enable the alarm
+
+After you set the time, you sill need to actually enable the alarm in the DS3231. I believe that it works best to follow a three-step process:
+
+1. disable the alarm
+2. clear the alarm status flag
+3. enable the alarm
+
+For the alarm A1, the instructions in the DS3231 library would be:
+
+```
+turnOff Alarm(1); // clear "enable" bit in register 0Eh
+checkIfAlarm(1); // clear status bit in register 0Fh
+turnOnAlarm(1); // set enable bit in register 0Eh
+```
+
+Why would code writers choose to "check" an alarm that they know is not presently sending a signal? The reason is that the ```checkIfAlarm()``` function has a non-obvious side effect. It clears the alarm status flag. This flag must be cleared in order for the DS3231 to place a HIGH voltage on its SQW alarm pin. When that bit is set (to 1), the voltage on SQW pin is LOW, and vice versa. Refer to the discussion of bits 1 and 0 in the "Status Register (0Fh)", on page 14 of the DS3231 datasheet.
 
 ## Step 4: Allow the Clock to Tell the Time
 Your main loop has no need to measure time. It needs only to check a flag to see whether an alarm has happened. In the example sketch, this flag is a boolean variable named "alarmEventFlag":
@@ -172,7 +231,12 @@ For deep and occult reasons, always use the special function, ```digitalPinToInt
 * The ISR changes the alarmEventFlag to *true*. And that is all it needs to do.
 * The next time the main loop tests the alarmEventFlag, it will find the flag to be true.
     * The special code will then run.
-    * The special code can sets a new alarm time if you want to repeat the cycle.
-    * The code also restores the value of *false* to the alarmEventFlag 
+    * The code turns off the alarm and restores the value of *false* to the alarmEventFlag .
+
+The special code can set a new alarm time also, if you want to repeat the cycle. Begin by calculating the new alarm time, as described in Step 3, and follow the sequence of steps from there.
+
+I would expect the example sketch to produce output similar to the illustration below, when it is run on an Arduino Uno correctly connected to a DS3231 module, the way I describe it in this tutorial.
+
+
 
 
