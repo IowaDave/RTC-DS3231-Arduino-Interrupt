@@ -83,8 +83,7 @@ We will talk to the DS3231 module by means of a DS3231 "object", a kind of softw
 ```
 #include <DS3231.h>
 DS3231 clock;
-
-Serial.println(clock.month()); // the current month, 1..12
+Serial.println(clock.getMinute()); // the current minute, 0..59
 ```
 
 We will use tools in our "clock" object to set the alarm. But first we need to calculate the alarm time.
