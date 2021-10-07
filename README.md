@@ -187,7 +187,7 @@ The setA2Time() function works similarly, but without a parameter for seconds. T
 
 ### Enable the alarm
 
-After you set the time, you sill need to actually enable the alarm in the DS3231. I believe that it works best to follow a three-step process:
+After you set the time, you still need to actually enable the alarm in the DS3231. I believe that it works best to follow a three-step process:
 
 1. disable the alarm
 2. clear the alarm status flag
