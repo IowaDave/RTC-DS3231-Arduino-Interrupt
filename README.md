@@ -202,7 +202,7 @@ turnOnAlarm(1); // set enable bit in register 0Eh
 ```
 For alarm A2, simply change the parameter to 2. For example: ```checkIfAlarm(2); // clear A2 flag bit in register 0Fh```.
 
-Why would code writers choose to "check" an alarm that they know is not presently sending a signal? The reason is that the ```checkIfAlarm()``` function has a non-obvious side effect. It clears the alarm status flag. We use the function, ```checkIfAlarm()```, becdause it is the only one in the DS3231 library that performs the necessary operation.
+Why would code writers choose to "check" an alarm that they know is not presently sending a signal? The reason is that the ```checkIfAlarm()``` function has a non-obvious side effect. It clears the alarm status flag. We use the function, ```checkIfAlarm()```, because it is the only one in the DS3231 library that performs the necessary operation.
 
 Think about it. For reasons to be explained below, The Arduino interrupt-sensing hardware needs the voltage on the DS3231's SQW pin to be HIGH prior to the moment when the alarm occurs. The alarm event changes two things inside the DS3231:
 1. It changes the voltage on the SQW pin to LOW.
