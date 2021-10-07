@@ -124,7 +124,7 @@ void setup() {
   dt = addSecondsToTime(10, dt);
 
   // print the new time
-  Serial.println("First alarm set to time:");
+  Serial.print("First alarm set to time: ");
   Serial.print(dt.hour()); Serial.print(":");
   if (dt.minute() < 10) Serial.print("0");
   Serial.print(dt.minute()); Serial.print(":");
@@ -134,6 +134,9 @@ void setup() {
   // set the alarm to the new time
   setTheAlarm(dt);
 
+  // begin reporting alarm events
+  Serial.println ("Alarm events:");
+  
 }
 
 void loop() {
