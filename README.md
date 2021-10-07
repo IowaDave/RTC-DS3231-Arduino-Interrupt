@@ -15,7 +15,7 @@ Go step by step. This tutorial demonstrates the following steps:
 1. Put the special code segments into a block that runs only when it is allowed to, rather than in the main loop of your sketch. 
 2. Connect the alarm pin (named SQW) of the DS3231 module to a pin on the Arduino that can be used for interrupts.
 3. Set an alarm on the DS3231 clock.
-4. The Arduino's main loop can ignore the clock while it performs other tasks.  
+4. Enable the Arduino's main loop to ignore the clock while it performs other tasks.  
 5. When the alarm happens, the DS3231 will pull the Arduino pin "low", that is, to near-zero voltage. 
 6. The Arduino can detect this change and then "interrupt" the main loop to run the special code at that time.
 
@@ -200,21 +200,19 @@ turnOffAlarm(1); // clear "enable" bit in register 0Eh
 checkIfAlarm(1); // clear alarm flag bit in register 0Fh
 turnOnAlarm(1); // set enable bit in register 0Eh
 ```
+For alarm A2, simply change the parameter to 2. For example: ```checkIfAlarm(2); // clear A2 flag bit in register 0Fh```.
 
-Why would code writers choose to "check" an alarm that they know is not presently sending a signal? The reason is that the ```checkIfAlarm()``` function has a non-obvious side effect. It clears the alarm status flag. 
+Why would code writers choose to "check" an alarm that they know is not presently sending a signal? The reason is that the ```checkIfAlarm()``` function has a non-obvious side effect. It clears the alarm status flag. We use the function, ```checkIfAlarm()```, becdause it is the only one in the DS3231 library that performs the necessary operation.
 
 Think about it. For reasons to be explained below, The Arduino interrupt-sensing hardware needs the voltage on the DS3231's SQW pin to be HIGH prior to the moment when the alarm occurs. The alarm event changes two things inside the DS3231:
 1. It changes the voltage on the SQW pin to LOW.
 2. It sets an alarm flag bit.
 
-The SQW pin will remain LOW as long as that alarm flag bit remains set. While it remains LOW, the Arduino cannot sense any more alarms. The flag bit must be cleared in order for the DS3231 to restore a HIGH voltage on its SQW alarm pin. Refer to the discussion of bits 1 and 0 in the "Status Register (0Fh)", on page 14 of the DS3231 datasheet.
+The SQW pin will remain LOW as long as that alarm flag bit remains set. While it remains LOW, the Arduino cannot sense any more alarms. The alarm flag bit must be cleared in order for the DS3231 to restore a HIGH voltage on its SQW alarm pin. Refer to the discussion of bits 1 and 0 in the "Status Register (0Fh)", on page 14 of the DS3231 datasheet.
 
-*Each alarm has its own alarm flag bit inisde the DS3231. If you are working with both of the alarms, you might find it makes sense routinely to clear both of the flag bits. Simply call the function twice, once for each alarm number*:
-```
-checkIfAlarm(1); // clear alarm #1 flag bit in register 0Fh
-checkIfAlarm(2); // clear alarm #2 flag bit in register 0Fh
-```
-## Step 4: Allow the Clock to Tell the Time
+*Each alarm has its own alarm flag bit inisde the DS3231. If the sketch enables both of the alarms, then either one of the alarm flag bits can hold the SQW pin LOW. The DS3231 will not do this on its own. It is the code writer's job to clear an alarm's flag bit after the alarm occurs*.
+
+## Step 4: Allow the Main Loop To Ignore the Clock
 Your main loop has no need to measure time. It needs only to check a flag to see whether an alarm has happened. In the example sketch, this flag is a boolean variable named "alarmEventFlag":
 
 ```
