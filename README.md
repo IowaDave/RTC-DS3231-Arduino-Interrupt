@@ -112,7 +112,7 @@ uint32_t currentSeconds = currentTime.unixtime(); // express the date in seconds
 DateTime alarmTime(currentSeconds + interval); // add 10 seconds and create a new date
 ```
 
-Even though the alarmTime object is created based on a number of seconds, it provides tools in its toolbox to express its year, month, day, hour, minute, and second. We set the alarm time on the DS3231, as described next, using the alarmTime as the source of the values we will need.
+Even though the alarmTime object is created based on a number of seconds, it provides tools in its toolbox to express its year, month, day, hour, minute, and second. We set the alarm time on the DS3231, as described next, using the alarmTime object as the source of the values we will need.
 
 Suppose, for example, that the currentTime reported by the DS3231 module was 7 seconds past 10:42 in the morning on Wednesday, October 27, 2021. The alarmTime calculated above would be 10:42:17 that same day, ten seconds later.
 
