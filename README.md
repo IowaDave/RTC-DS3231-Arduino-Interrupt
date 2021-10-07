@@ -248,6 +248,5 @@ The special code can set a new alarm time also, if you want to repeat the cycle.
 
 I would expect the example sketch to produce output similar to the illustration below, when it is run on an Arduino Uno correctly connected to a DS3231 module, the way I describe it in this tutorial. Don't be surprised if the times displayed are different. You should work with your own times, anyway.
 
-![Serial Monitor with sketch running](https://github.com/IowaDave/RTC-DS3231-Arduino-Interrupt/blob/main/images/SerialMonitor.jpg)
 
 
