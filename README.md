@@ -196,7 +196,7 @@ After you set the time, you still need to actually enable the alarm in the DS323
 For the alarm A1, the instructions in the DS3231 library would be:
 
 ```
-turnOff Alarm(1); // clear "enable" bit in register 0Eh
+turnOffAlarm(1); // clear "enable" bit in register 0Eh
 checkIfAlarm(1); // clear status bit in register 0Fh
 turnOnAlarm(1); // set enable bit in register 0Eh
 ```
