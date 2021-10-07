@@ -2,9 +2,9 @@
 ![DS3231 module with Arduino](https://github.com/IowaDave/RTC-DS3231-Arduino-Interrupt/blob/main/images/hardware.jpg)
 Tricks I learned about using a DS3231 Real Time Clock to interrupt an Arduino
 ## Problem
-You have some skill and experience writing code with the Arduino IDE. You want to determine precise times when the Arduino will run special code segments in a sketch, without using the timers and counters in the Arduino hardware. In other words, you would like to avoid using code statements such as ```delay()```. 
+You want to determine precise times when the Arduino will run special code segments in a sketch, without using the timers and counters in the Arduino hardware. You have some skill and experience writing code with the Arduino IDE, and you would like to avoid using code statements such as ```delay()```. 
 
-Instead, you would like to use a very accurate DS3231 Real Time Clock module as a source of external interrupts. It may be important to you that the DS3231 can use a battery to maintain accurate time even if the Arduino temporarily loses power. 
+Instead, you would like to connect a very precise DS3231 Real Time Clock module as a source of external interrupts. It may be important to you that the DS3231 can use a battery to maintain accurate time even if the Arduino temporarily loses power. 
 
 Finally, you want to learn how to use the DS3231.h library by Andrew Wickert that is referred to in the Arduino online reference: [https://www.arduino.cc/reference/en/libraries/ds3231/](https://www.arduino.cc/reference/en/libraries/ds3231/). It contains a few tricks that can prove well worth the effort to master. You can import this library into your Arduino IDE by using the Library Manager (Tools > Manage Libraries...).
 
@@ -19,7 +19,7 @@ Go step by step. This tutorial demonstrates the following steps:
 5. When the alarm happens, the DS3231 will pull the Arduino pin "low", that is, to near-zero voltage. 
 6. The Arduino can detect this change and then "interrupt" the main loop to run the special code at that time.
 
-If you want the special code to run more than once, at intervals you specify, your code can do Step 3 again and set a new alarm. The Solution in this example interrupts the Arduino repeatedly, at 10-second intervals.
+If you want the special code to run more than once, at intervals you specify, your code can do Step 3 again and set a new alarm. The example sketch that accompanies this tutorial interrupts the Arduino repeatedly, at 10-second intervals.
 
 ## Resources
 
@@ -29,7 +29,7 @@ If you want the special code to run more than once, at intervals you specify, yo
 [https://datasheets.maximintegrated.com/en/ds/DS3231.pdf](https://datasheets.maximintegrated.com/en/ds/DS3231.pdf),
 * the files named DS3231.h and DS3231.cpp in Andrew Wickert's public github repository:
 [https://github.com/NorthernWidget/DS3231](https://github.com/NorthernWidget/DS3231),
-* and the Arduino Reference for the attachInterrupt() function:
+* and the Arduino Reference for the ```attachInterrupt()``` function:
 [https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/](https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/).
 
 ## Step 1: Special Code Segment
@@ -181,9 +181,9 @@ The final three parameters of the ```setA1Time()``` function are boolean, or tru
     );
 ```
 
-In the example sketch, where we set the alarm to interrupt every 10 seconds, only the A1Second and the AlarmBits parameters matter. However, we need to supply them all when we call the function to setA1Time(). Correct values are no more difficult to provide than junk values are; we might as well exercise care with them.
+In the example sketch, where we set the alarm to interrupt every 10 seconds, only the A1Second and the AlarmBits parameters matter. However, we need to supply them all when we call the function to ```setA1Time()```. Correct values are no more difficult to provide than junk values are; we might as well exercise care with them.
 
-The setA2Time() function works similarly, but without a parameter for seconds. Take some time to review lines 119 through 145 of the DS3231.h file in the library and pages 11-12 in the datasheet. Sit patiently with these references until you have found in them the information you need to set an alarm time.
+The ```setA2Time()``` function works similarly, but without a parameter for seconds. Take some time to review lines 119 through 145 of the DS3231.h file in the library and pages 11-12 in the datasheet. Sit patiently with these references until you have found in them the information you need to set an alarm time.
 
 ### Enable the alarm
 
@@ -197,12 +197,23 @@ For the alarm A1, the instructions in the DS3231 library would be:
 
 ```
 turnOffAlarm(1); // clear "enable" bit in register 0Eh
-checkIfAlarm(1); // clear status bit in register 0Fh
+checkIfAlarm(1); // clear alarm flag bit in register 0Fh
 turnOnAlarm(1); // set enable bit in register 0Eh
 ```
 
-Why would code writers choose to "check" an alarm that they know is not presently sending a signal? The reason is that the ```checkIfAlarm()``` function has a non-obvious side effect. It clears the alarm status flag. This flag must be cleared in order for the DS3231 to place a HIGH voltage on its SQW alarm pin. When that bit is set (to 1), the voltage on SQW pin is LOW, and vice versa. Refer to the discussion of bits 1 and 0 in the "Status Register (0Fh)", on page 14 of the DS3231 datasheet.
+Why would code writers choose to "check" an alarm that they know is not presently sending a signal? The reason is that the ```checkIfAlarm()``` function has a non-obvious side effect. It clears the alarm status flag. 
 
+Think about it. For reasons to be explained below, The Arduino interrupt-sensing hardware needs the voltage on the DS3231's SQW pin to be HIGH prior to the moment when the alarm occurs. The alarm event changes two things inside the DS3231:
+1. It changes the voltage on the SQW pin to LOW.
+2. It sets an alarm flag bit.
+
+The SQW pin will remain LOW as long as that alarm flag bit remains set. While it remains LOW, the Arduino cannot sense any more alarms. The flag bit must be cleared in order for the DS3231 to restore a HIGH voltage on its SQW alarm pin. Refer to the discussion of bits 1 and 0 in the "Status Register (0Fh)", on page 14 of the DS3231 datasheet.
+
+*Each alarm has its own alarm flag bit inisde the DS3231. If you are working with both of the alarms, you might find it makes sense routinely to clear both of the flag bits. Simply call the function twice, once for each alarm number*:
+```
+checkIfAlarm(1); // clear alarm #1 flag bit in register 0Fh
+checkIfAlarm(2); // clear alarm #2 flag bit in register 0Fh
+```
 ## Step 4: Allow the Clock to Tell the Time
 Your main loop has no need to measure time. It needs only to check a flag to see whether an alarm has happened. In the example sketch, this flag is a boolean variable named "alarmEventFlag":
 
@@ -214,7 +225,7 @@ if (alarmEventFlag == true) {
 
 Most of the time, the flag will be *false*, and the loop will skip over the special code.  How does the sketch set up the flag? Three steps:
 
-1. Define the flag variable "globally" in the sketch, that is, up at the top in the main ".ino" file for the sketch, outside of any functions. Its initial value of *false* (no alarm yet) can be set at the same time, like this<br>```bool alarmEventFlag = false;```
+1. Define the flag variable globally in the sketch, that is, up at the top of the main ".ino" file for the sketch, outside of any functions. Its initial value of *false* (no alarm yet) can be set at the same time, like this<br>```bool alarmEventFlag = false;```
 2. Write a function that sets the flag to *true* when an interrupt happens. Such a function is called an Interrupt Service Routine, or ISR. The example sketch uses a descriptive name for an ISR designed to work with interrupts from the RTC:<br>```void rtcISR() {alarmEventFlag = true;}```
 3. Finally, the ```attachInterrupt()``` function provided by the Arduino IDE brings it all together. It tells the Arduino hardware to run the rtcISR() function immediately whenever it detects a "FALLING" signal on a designated digital pin.
 
@@ -228,9 +239,9 @@ For deep and occult reasons, always use the special function, ```digitalPinToInt
 
 ## Steps 5 and 6: What happens when the DS3231 signals an alarm
 * The DS3231 will reduce the voltage on its SQW pin to LOW from HIGH. 
-* The "dataPin" on the Arduino will detect a FALLING event and interrupt the Arduino. 
-* This will cause the ISR to run immediately. 
-* The ISR changes the alarmEventFlag to *true*. And that is all it needs to do.
+* The data pin on the Arduino will detect a FALLING event and interrupt the Arduino. 
+* The Arduino hardware will immediately run the Interrupt Service Routine. 
+* The ISR changes the alarmEventFlag to *true*. That is all it needs to do.
 * The next time the main loop tests the alarmEventFlag, it will find the flag to be true.
     * The special code will then run.
     * The code turns off the alarm and restores the value of *false* to the alarmEventFlag .
