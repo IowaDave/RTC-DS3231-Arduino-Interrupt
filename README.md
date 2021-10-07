@@ -2,7 +2,7 @@
 ![DS3231 module with Arduino](https://github.com/IowaDave/RTC-DS3231-Arduino-Interrupt/blob/main/images/hardware.jpg)
 Tricks I learned about using a DS3231 Real Time Clock to interrupt an Arduino
 ## Problem
-You have some skill and experience writing code with the Arduino IDE. You want to determine precise times when the Arduino will run special code segments in a sketch, without using the timers and counters in the Arduino hardware. In other words, would would like to avoid using code statements such as ```delay()```. 
+You have some skill and experience writing code with the Arduino IDE. You want to determine precise times when the Arduino will run special code segments in a sketch, without using the timers and counters in the Arduino hardware. In other words, you would like to avoid using code statements such as ```delay()```. 
 
 Instead, you would like to use a very accurate DS3231 Real Time Clock module as a source of external interrupts. It may be important to you that the DS3231 can use a battery to maintain accurate time even if the Arduino temporarily loses power. 
 
