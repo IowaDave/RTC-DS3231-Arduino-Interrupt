@@ -210,7 +210,7 @@ Think about it. For reasons to be explained below, The Arduino interrupt-sensing
 
 The SQW pin will remain LOW as long as that alarm flag bit remains set. While it remains LOW, the Arduino cannot sense any more alarms. The alarm flag bit must be cleared in order for the DS3231 to restore a HIGH voltage on its SQW alarm pin. Refer to the discussion of bits 1 and 0 in the "Status Register (0Fh)", on page 14 of the DS3231 datasheet.
 
-*Each alarm has its own alarm flag bit inisde the DS3231. If the sketch enables both of the alarms, then either one of the alarm flag bits can hold the SQW pin LOW. The DS3231 will not do this on its own. It is the code writer's job to clear an alarm's flag bit after the alarm occurs*.
+*Each alarm has its own alarm flag bit inisde the DS3231. If the sketch enables both of the alarms, then either one of the alarm flag bits can hold the SQW pin LOW. The DS3231 will not clear an alarm flag bit on its own initiative. It is the code writer's job to clear an alarm's flag bit after the alarm occurs*.
 
 ## Step 4: Allow the Main Loop To Ignore the Clock
 Your main loop has no need to measure time. It needs only to check a flag to see whether an alarm has happened. In the example sketch, this flag is a boolean variable named "alarmEventFlag":
