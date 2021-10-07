@@ -153,13 +153,15 @@ By the way, notice that the "clock" and "alarmTime" variables are objects, that 
 
 The next parameter is a byte that truly is only a collection of bits. The bits have names as defined in the DS3231 datasheet (on page 11). 
 
-|Bit 7|Bit 6|Bit 5|Bit 4|Bit 3|Bit 2|Bit 1|Bit0|
+|Bit 7|Bit 6|Bit 5|Bit 4|Bit 3|Bit 2|Bit 1|Bit 0|
+|-----|-----|-----|-----|-----|-----|-----|-----|
 |--|--|--|DyDt|A1M4|A1M3|A1M2|A1M1|
 
 Together, the bits form a "mask", or pattern, which tells the DS3231 when and how often to signal an alarm. A table on page 12 of the datasheet gives the meaning for different collections of the bits. Based on that table, the example sketch in this tutorial uses the following collection of bits:
 
 
 |--|--|--|DyDt|A1M4|A1M3|A1M2|A1M1|
+|--|--|--|----|----|----|----|----|
 |0|0|0|0|1|1|1|0|
 
 This arrangement of bits can be expressed explicitly in the code: ```0x00001110```. It tells the DS3231 to signal the alarm whenever "the seconds match", that is, when the "seconds" value of the alarm setting matches the "seconds" value of the current time. 
