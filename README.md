@@ -225,15 +225,13 @@ Most of the time, the flag will be *false*, and the loop will skip over the spec
 
 1. Define the flag variable globally in the sketch, that is, up at the top of the main ".ino" file for the sketch, outside of any functions. Its initial value of *false* (no alarm yet) can be set at the same time, like this<br>```bool alarmEventFlag = false;```
 2. Write a function that sets the flag to *true* when an interrupt happens. Such a function is called an Interrupt Service Routine, or ISR. The example sketch uses a descriptive name for an ISR designed to work with interrupts from the RTC:<br>```void rtcISR() {alarmEventFlag = true;}```
-3. Finally, the ```attachInterrupt()``` function provided by the Arduino IDE brings it all together. It tells the Arduino hardware to run the ```rtcISR()``` function immediately whenever it detects a "FALLING" signal on a designated digital pin.
+3. Finally, the ```attachInterrupt()``` function provided by the Arduino IDE brings it all together. The following example tells the Arduino hardware to run the ```rtcISR()``` function immediately whenever it detects a "FALLING" signal on a designated digital pin.<br>```attachInterrupt(digitalPinToInterrupt(dataPin), rtcISR, FALLING);```
+
+For deep and occult reasons, always use the special function, ```digitalPinToInterrupt()```, when specifing the pin number for an interrupt. I leave it as an exercise for the reader to discover why we need that function.
 
 What is a FALLING signal?  It means a change in voltage, to LOW from HIGH, as detected by the digital pin of the Arduino. Where does the voltage change come from? It originates on the alarm pin of the DS3231 module. That pin is labeled, SQW, and it emits a HIGH voltage, near the VCC supply level (i.e., 5 volts on the Uno,) most of the time. An alarm causes the DS3231 to change the voltage on the SQW pin to LOW. The Arduino senses the voltage coming from the SQW pin and notices the change. We tell the Arduino to notice FALLING because that event only happens once per alarm, whereas the LOW level can persist and confuse the Arduino into triggering many interrupts.
 
 Which pin can sense a FALLING change in voltage? For Unos, you may choose either of pins 2 or 3. For Leonardo, it can be any one of pins 0, 1, or 7. (Yes, I know, Leonardo senses interrupts on pins 2 and 3 also. However, those are Leonardo's I2C pins, which means the DS3231 module would be using them. I start with pin 7 for interrupts on a Leonardo.) The example sketch defines a dataPin variable and initializes its value to 3 for running on an Uno this way:<br>```int dataPin = 3;```
-
-It all comes together as follows. Notice that the ISR is referred to only by its name, without the parenthese or the curly braces:<br>```attachInterrupt(digitalPinToInterrupt(dataPin), rtcISR, FALLING);```
-
-For deep and occult reasons, always use the special function, ```digitalPinToInterrupt()```, when specifing the pin number for an interrupt. I leave it as an exercise for the reader to discover why we need that function.
 
 ## Steps 5 and 6: What happens when the DS3231 signals an alarm
 * The DS3231 will reduce the voltage on its SQW pin to LOW from HIGH. 
