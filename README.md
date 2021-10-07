@@ -137,9 +137,9 @@ The first five parameters are of type "byte". The C++ Standard defines the byte 
 
 We can think of byte-type variables as if they were unsigned integers in this particular situation. They can hold an integer value between 0 and 255. *CAUTION: the code writer has to avoid nonsensical values. For example, a value of 102 makes no sense for any of these parameters. It is your job as the code writer to supply sensible values.*
 
-Let's continue with the alarmTime created in the previous step: the 27th day of the month, at 17 seconds past 10:42 in the morning. The listing below shows how you might supply those values into the function. I list parameter on its own line, to make them more readable by humans and to allow space for comments. The example here is incomplete; it demonstrates only the byte-type values for date and time. The function requires more parameters, as described below, and will not run in the form shown here.
+Let's continue with the alarmTime created in the previous step: the 27th day of the month, at 17 seconds past 10:42 in the morning. The listing below shows how you might supply those values into the function. I list each parameter on its own line, to make them more readable by humans and to allow space for comments. The example here is incomplete; it demonstrates only the byte-type values for date and time. The function requires more parameters, as described below, and will not run in the form shown here.
 
-By the way, this is where we begin to use that DS3231 object named "clock".
+By the way, notice that the "clock" and "alarmTime" variables are objects, that is, they are software toolboxes. As you see, we use tools from inside the respective toolboxes to access the information the objects contain.
 
 ``` 
     clock.setA1Time(
