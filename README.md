@@ -125,17 +125,19 @@ A DS3231 makes two, different alarms available: Alarm #1 (A1) and Alarm #2 (A2).
 > clock.setA2Time(), and
 > clock.getA2Time()
 
-The setA1Time() function takes eight parameters:
+The setA1Time() function takes eight parameters, as listed in this quotation from the DS3231.h file:
 
 ```void setA1Time(byte A1Day, byte A1Hour, byte A1Minute, byte A1Second, byte AlarmBits, bool A1Dy, bool A1h12, bool A1PM); ```
 
-The first five parameters are of type "byte". The C++ Standard defines the byte type this way [https://en.cppreference.com/w/cpp/types/byte](https://en.cppreference.com/w/cpp/types/byte):
+A close reading of the DS3231.h header file can explain the parameters. What follows here are my attempts to re-explain them to myself in my own words. If the reader finds any discrepancy between my version and the header file, assume that the header is correct.
+
+The first five parameters are of type "byte". The cppreference web site defines the byte type this way [https://en.cppreference.com/w/cpp/types/byte](https://en.cppreference.com/w/cpp/types/byte):
 
 > std::byte is a distinct type that implements the concept of byte as specified in the C++ language definition.
 
 > Like char and unsigned char, it can be used to access raw memory occupied by other objects (object representation), but unlike those types, it is not a character type and is not an arithmetic type. A byte is only a collection of bits, and the only operators defined for it are the bitwise ones.
 
-We can think of byte-type variables as if they were unsigned integers in this particular situation. They can hold an integer value between 0 and 255. *CAUTION: the code writer has to avoid nonsensical values. For example, a value of 102 makes no sense for any of these parameters. It is your job as the code writer to supply sensible values.*
+We can allow ourselves to think of the byte-type variables for day and time as if they were unsigned integers, in this particular situation. They can hold an integer value between 0 and 255. *CAUTION: the code writer has to avoid nonsensical values. For example, a value of 102 makes no sense for any of these parameters. It is your job as the code writer to supply sensible values.*
 
 Let's continue with the alarmTime created in the previous step: the 27th day of the month, at 17 seconds past 10:42 in the morning. The listing below shows how you might supply those values into the function. I list each parameter on its own line, to make them more readable by humans and to allow space for comments. The example here is incomplete; it demonstrates only the byte-type values for date and time. The function requires more parameters, as described below, and will not run in the form shown here.
 
@@ -151,7 +153,7 @@ By the way, notice that the "clock" and "alarmTime" variables are objects, that 
     );
 ```
 
-The next parameter is a byte that truly is only a collection of bits. The bits have names as defined in the DS3231 datasheet (on page 11). 
+The next byte-type parameter, named AlarmBits, truly is only a collection of bits. The bits have names as defined in the DS3231 datasheet (on page 11). 
 
 |Bit 7|Bit 6|Bit 5|Bit 4|Bit 3|Bit 2|Bit 1|Bit 0|
 |-----|-----|-----|-----|-----|-----|-----|-----|
@@ -175,9 +177,12 @@ The final three parameters of the ```setA1Time()``` function are boolean, or tru
       alarmTime.minute(), // the minute of the hour: 42
       alarmTime.second(), // the second of the minute: 17
       0x00001110, // AlarmBits = signal when the seconds match
-      false, // A1Dy false = A1Day means the date in the month; true = A1Day means the day of the week
-      false, // A1h12 false = A1Hour of 0..23; true = A1Hour of 1..12 AM or PM
-      false  // A1PM false = match A1Hour a.m.; true = match A1Hour p.m.
+      false, // A1Dy  false = A1Day means the date in the month; 
+             //       true = A1Day means the day of the week
+      false, // A1h12 false = A1Hour in range 0..23; 
+             //       true = A1Hour in range 1..12 AM or PM
+      false  // A1PM  false = A1Hour is a.m.; 
+             //       true = A1Hour is p.m.
     );
 ```
 
@@ -187,7 +192,7 @@ The ```setA2Time()``` function works similarly, but without a parameter for seco
 
 ### Enable the alarm
 
-After you set the time, you still need to actually enable the alarm in the DS3231. I believe that it works best to follow a three-step process:
+After setting the time, the sketch must take additional action to enable the alarm in the DS3231. I encourage the reader consistently to follow a three-step sequence, even if some step might seem less necessary at some time for some reason. If your code must err, let it err on the side of certainty.
 
 1. disable the alarm
 2. clear the alarm status flag
@@ -196,16 +201,16 @@ After you set the time, you still need to actually enable the alarm in the DS323
 For the alarm A1, the instructions in the DS3231 library would be:
 
 ```
-turnOffAlarm(1); // clear "enable" bit in register 0Eh
-checkIfAlarm(1); // clear alarm flag bit in register 0Fh
-turnOnAlarm(1); // set enable bit in register 0Eh
+turnOffAlarm(1); // clear the A1 enable bit in register 0Eh
+checkIfAlarm(1); // clear the A1 alarm flag bit in register 0Fh
+turnOnAlarm(1); // set the A1 enable bit in register 0Eh
 ```
 For alarm A2, simply change the parameter to 2. For example: ```checkIfAlarm(2); // clear A2 flag bit in register 0Fh```.
 
-Why would code writers choose to "check" an alarm that they know is not presently sending a signal? The reason is that the ```checkIfAlarm()``` function has a non-obvious side effect. It clears the alarm status flag. We use the function, ```checkIfAlarm()```, because it is the only one in the DS3231 library that performs the necessary operation.
+Why would code writers choose to "check" an alarm that they believe is not presently sending a signal? The reason is that the ```checkIfAlarm()``` function has a non-obvious side effect. It clears the alarm flag bit. We use the function, ```checkIfAlarm()```, because it is the only one in the DS3231 library that performs the necessary operation.
 
 Think about it. For reasons to be explained below, The Arduino interrupt-sensing hardware needs the voltage on the DS3231's SQW pin to be HIGH prior to the moment when the alarm occurs. The alarm event changes two things inside the DS3231:
-1. It changes the voltage on the SQW pin to LOW.
+1. It reduces the voltage on the SQW pin to LOW.
 2. It sets an alarm flag bit.
 
 The SQW pin will remain LOW as long as that alarm flag bit remains set. While it remains LOW, the Arduino cannot sense any more alarms. The alarm flag bit must be cleared in order for the DS3231 to restore a HIGH voltage on its SQW alarm pin. Refer to the discussion of bits 1 and 0 in the "Status Register (0Fh)", on page 14 of the DS3231 datasheet.
