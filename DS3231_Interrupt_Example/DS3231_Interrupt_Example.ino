@@ -131,7 +131,14 @@ void setup() {
   if (dt.second() < 10) Serial.print("0");
   Serial.println(dt.second());
 
-  // set the alarm to the new time
+  // turn off the DS3231 alarms first
+  
+  clock.turnOffAlarm(1);
+  clock.checkIfAlarm(1);
+  clock.turnOffAlarm(2);
+  clock.checkIfAlarm(2);
+  
+  // then set the alarm to the new time
   setTheAlarm(dt);
 
   // begin reporting alarm events
